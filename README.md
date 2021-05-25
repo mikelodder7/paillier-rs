@@ -14,6 +14,18 @@ This crate uses the [unknown-order](https://crates.io/crates/unknown_order) crat
 switching the underlying big number implementation based on license preferences and performance.
 As such, this crate reexports `unknown_order` so consumers of this crate do not have to have a separate dependency.
 
+## Why this crate?
+
+There are other implementations of Paillier in rust, but none of them offer everything I needed like implementing
+ops traits, or the flexibility to choose a big number backend.  Also, some of them do not even have documentation
+which means users are expected to look at code which is not ideal, or are outdated and not current with 2018 or newer edition.
+My goal was to create a simple Paillier library with an easy-to-understand misuse resistant API.
+
+**This implementation has not been reviewed or audited. Use at your own risk.**
+
+Efforts have been made to mitigate some side channel attacks but ultimately there are many factors involved.
+For a good read, see Thomas Pornin's [Why Constant-Time Crypto](https://www.bearssl.org/constanttime.html) article.
+
 ## Encryption
 
 Encrypting messages requires that the messages be less than the composite modulus `n`. If messages > `n`, 
@@ -32,9 +44,9 @@ use libpaillier::{
 
 fn main() {
     // Generate a new random key from two safe-primes
-    let res = SecretKey::random();
+    let res = DecryptionKey::random();
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let m = b"this is a test message";
     let res = pk.encrypt(m, None);
@@ -66,9 +78,9 @@ use libpaillier::{
 };
 
 fn main() {
-    let res = SecretKey::random();
+    let res = DecryptionKey::random();
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
     let m1 = BigNumber::from(7);
     let m2 = BigNumber::from(6);
 
@@ -98,9 +110,9 @@ use libpaillier::{
 };
 
 fn main() {
-    let res = SecretKey::random();
+    let res = DecryptionKey::random();
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
     let m1 = BigNumber::from(7);
     let m2 = BigNumber::from(6);
 
@@ -137,12 +149,12 @@ use libpaillier::{
 
 
 fn main() {
-    let res = SecretKey::random();
+    let res = DecryptionKey::random();
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
     
     // Commonly used proof for tECDSA
-    let signing_key = k256::SecretKey::random(rand::rngs::OsRng::default());
+    let signing_key = k256::DecryptionKey::random(rand::rngs::OsRng::default());
     let verification_key = signing_key.public_key();
     let mut nonce = Vec::new();
     nonce.extend_from_slice(

@@ -1,16 +1,16 @@
-use crate::{mod_in, Ciphertext, Nonce, SecretKey};
+use crate::{mod_in, Ciphertext, DecryptionKey, Nonce};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
 
-/// A Paillier public key
+/// A Paillier encryption key
 #[derive(Clone, Debug, Zeroize)]
-pub struct PublicKey {
+pub struct EncryptionKey {
     pub(crate) n: BigNumber, // N = p * q, where p = 2p'+1, q = 2q'+1, p,q,p',q' are primes
     pub(crate) nn: BigNumber, // N^2
 }
 
-impl Serialize for PublicKey {
+impl Serialize for EncryptionKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -19,7 +19,7 @@ impl Serialize for PublicKey {
     }
 }
 
-impl<'de> Deserialize<'de> for PublicKey {
+impl<'de> Deserialize<'de> for EncryptionKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -32,13 +32,13 @@ impl<'de> Deserialize<'de> for PublicKey {
     }
 }
 
-impl From<&SecretKey> for PublicKey {
-    fn from(sk: &SecretKey) -> PublicKey {
+impl From<&DecryptionKey> for EncryptionKey {
+    fn from(sk: &DecryptionKey) -> EncryptionKey {
         sk.pk.clone()
     }
 }
 
-impl PublicKey {
+impl EncryptionKey {
     /// l computes a residuosity class of N^2: (x - 1) / n
     /// where it is the quotient x - 1 divided by N not modular multiplication of x - 1 times
     /// the modular multiplication inverse of N. The function comes from Paillier's 99 paper.
@@ -58,7 +58,7 @@ impl PublicKey {
         Some((x - &one) / &self.n)
     }
 
-    /// Encrypt a given message with the public key and optionally use a random value
+    /// Encrypt a given message with the encryption key and optionally use a random value
     /// x must be less than N
     pub fn encrypt<M>(&self, x: M, r: Option<Nonce>) -> Option<(Ciphertext, Nonce)>
     where
@@ -114,7 +114,7 @@ impl PublicKey {
         self.n.to_bytes()
     }
 
-    /// Convert a  byte representation to a public key
+    /// Convert a  byte representation to a encryption key
     pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Self {
         let data = data.as_ref();
         let n = BigNumber::from_slice(data);

@@ -15,9 +15,9 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+mod decryptionkey;
+mod encryptionkey;
 mod proof_psf;
-mod publickey;
-mod secretkey;
 
 pub use unknown_order;
 
@@ -34,6 +34,6 @@ pub type Ciphertext = BigNumber;
 /// A Paillier nonce used during encryption
 pub type Nonce = BigNumber;
 
+pub use decryptionkey::*;
+pub use encryptionkey::*;
 pub use proof_psf::*;
-pub use publickey::*;
-pub use secretkey::*;

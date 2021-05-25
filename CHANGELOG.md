@@ -9,6 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- SecretKey - A Paillier secret decryption key
-- PublicKey - A Paillier public encryption key
+- DecryptionKey - A Paillier secret decryption key
+- EncryptionKey - A Paillier public encryption key
 - ProofSquareFree - A Proof that a Paillier keypair is square free.

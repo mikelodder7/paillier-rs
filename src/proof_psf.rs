@@ -1,4 +1,4 @@
-use crate::{mod_in, PublicKey, SecretKey};
+use crate::{mod_in, DecryptionKey, EncryptionKey};
 use digest::{
     generic_array::{typenum::Unsigned, GenericArray},
     Digest,
@@ -29,7 +29,7 @@ impl ProofSquareFree {
     /// the ECDSA Public key, the curve generator and prime,
     /// and the participant id as follows
     /// generateChallenges(g, q, y, N, pi, l)
-    pub fn generate<D: Digest>(sk: &SecretKey, nonce: &[u8]) -> Option<Self> {
+    pub fn generate<D: Digest>(sk: &DecryptionKey, nonce: &[u8]) -> Option<Self> {
         // M = N^-1 mod totient
         sk.pk.n.invert(&sk.totient).map(|m| {
             let mut proof = generate_challenges::<D>(&sk.pk, nonce);
@@ -42,7 +42,7 @@ impl ProofSquareFree {
     }
 
     /// Verify a Paillier modulus is square-free.
-    pub fn verify<D: Digest>(&self, pk: &PublicKey, nonce: &[u8]) -> bool {
+    pub fn verify<D: Digest>(&self, pk: &EncryptionKey, nonce: &[u8]) -> bool {
         let proof = generate_challenges::<D>(pk, nonce);
         debug_assert_eq!(proof.len(), L);
         debug_assert_eq!(proof.len(), self.0.len());
@@ -68,7 +68,7 @@ impl ProofSquareFree {
 
 /// Computes `l` deterministic numbers as challenges
 /// for `ProofSquareFree` which proves that the Paillier modulus is square free
-fn generate_challenges<D: Digest>(pk: &PublicKey, nonce: &[u8]) -> Vec<BigNumber> {
+fn generate_challenges<D: Digest>(pk: &EncryptionKey, nonce: &[u8]) -> Vec<BigNumber> {
     let b = pk.n.to_bytes().len();
     // Check that a modulus is not too small
     assert!(b >= 256);

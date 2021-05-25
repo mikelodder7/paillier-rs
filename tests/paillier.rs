@@ -19,10 +19,10 @@ fn b10(s: &str) -> BigNumber {
 
 #[test]
 fn encrypt() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let m = b"this is a test message";
     let res = pk.encrypt(m, None);
@@ -48,10 +48,10 @@ fn encrypt() {
 
 #[test]
 fn add() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let m1 = BigNumber::from(7);
     let m2 = BigNumber::from(6);
@@ -75,10 +75,10 @@ fn add() {
 
 #[test]
 fn mul() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let m1 = BigNumber::from(7);
     let m2 = BigNumber::from(6);
@@ -99,10 +99,10 @@ fn mul() {
 
 #[test]
 fn serialization() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let res = serde_json::to_string(&pk);
     assert!(res.is_ok());
@@ -113,7 +113,7 @@ fn serialization() {
             r#""1a916b30385e4d342bbcb6e3c56d70c37cb55c6ef50842006081e7e39df0670cf0de00707611839bb84355b43ddc871476fbf251651e391d2811eadb148b7f4aaf79bb770a5262290ba9d8be41b69b03ca5056b702eb02d29ec896eb1274661181b56e4b27979a8a47238c925f91653766fb286d833db1fdb93816d826d60a653bd0d2afa196c95265635108bd32ef63c52310b93bb682498d17d16e257f19503fe9d718418ad7a1834c64f125944818674aaf2c2c0bbb12d13d45bcc70d8db697879fba820fbedde986807ad0f15622d1d9ff7ede7e29b7547c3db9a2b3ca6d3e086a1d258b0b3f8b6e5008e3d8a85e744299240fd2064811aeb5e1db2b299f""#
         )
     );
-    let res = serde_json::from_str::<PublicKey>(&pk_str);
+    let res = serde_json::from_str::<EncryptionKey>(&pk_str);
     assert!(res.is_ok());
     let pk1 = res.unwrap();
     assert_eq!(pk1.n(), pk.n());
@@ -122,7 +122,7 @@ fn serialization() {
     assert!(res.is_ok());
     let sk_str = res.unwrap();
 
-    let res = serde_json::from_str::<SecretKey>(&sk_str);
+    let res = serde_json::from_str::<DecryptionKey>(&sk_str);
     assert!(res.is_ok());
     let sk1 = res.unwrap();
     assert_eq!(sk.u(), sk1.u());
@@ -133,19 +133,19 @@ fn serialization() {
 
 #[test]
 fn bytes() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let bytes = pk.to_bytes();
     assert_eq!(bytes.len(), 256);
-    let pk1 = PublicKey::from_bytes(bytes.as_slice());
+    let pk1 = EncryptionKey::from_bytes(bytes.as_slice());
     assert_eq!(pk1.n(), pk.n());
 
     let bytes = sk.to_bytes();
     assert_eq!(bytes.len(), 1032);
-    let res = SecretKey::from_bytes(bytes.as_slice());
+    let res = DecryptionKey::from_bytes(bytes.as_slice());
     assert!(res.is_ok());
     let sk1 = res.unwrap();
     assert_eq!(sk.u(), sk1.u());
@@ -156,10 +156,10 @@ fn bytes() {
 
 #[test]
 fn proof() {
-    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let ssk = k256::SecretKey::random(rand::rngs::OsRng::default());
     let spk = ssk.public_key();
@@ -194,10 +194,10 @@ fn proof() {
 
 #[test]
 fn all() {
-    let res = SecretKey::random();
+    let res = DecryptionKey::random();
     assert!(res.is_some());
     let sk = res.unwrap();
-    let pk = PublicKey::from(&sk);
+    let pk = EncryptionKey::from(&sk);
 
     let m = b"this is a test message";
     let res = pk.encrypt(m, None);

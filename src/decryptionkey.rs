@@ -1,13 +1,13 @@
-use crate::{mod_in, Ciphertext, PublicKey};
+use crate::{mod_in, Ciphertext, EncryptionKey};
 use serde::{Deserialize, Serialize};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
 
-/// A Paillier secret key
+/// A Paillier decryption key
 #[derive(Clone, Debug, Deserialize, Serialize, Zeroize)]
 #[zeroize(drop)]
-pub struct SecretKey {
-    pub(crate) pk: PublicKey,
+pub struct DecryptionKey {
+    pub(crate) pk: EncryptionKey,
     /// lcm(P - 1, Q - 1)
     pub(crate) lambda: BigNumber,
     /// Euler's totient: (P - 1)(Q - 1)
@@ -16,7 +16,7 @@ pub struct SecretKey {
     pub(crate) u: BigNumber,
 }
 
-impl SecretKey {
+impl DecryptionKey {
     /// Create a new random key
     pub fn random() -> Option<Self> {
         let mut p = BigNumber::safe_prime(1024);
@@ -48,7 +48,7 @@ impl SecretKey {
         let qm1: BigNumber = q - 1;
         let n = p * q;
         let nn = &n * &n;
-        let pk = PublicKey {
+        let pk = EncryptionKey {
             n: n.clone(),
             nn: nn.clone(),
         };
@@ -68,7 +68,7 @@ impl SecretKey {
             None => None,
             Some(u_inv) => match u_inv {
                 None => None,
-                Some(u) => Some(SecretKey {
+                Some(u) => Some(DecryptionKey {
                     pk,
                     lambda,
                     totient,
@@ -99,7 +99,7 @@ impl SecretKey {
     /// This measures about (n * 4) + 4 bytes or i.e.
     /// for a 2048 bit modulus == 1032 bytes.
     pub fn to_bytes(&self) -> Vec<u8> {
-        let bytes = SecretKeyBytes {
+        let bytes = DecryptionKeyBytes {
             n: self.pk.n.to_bytes(),
             lambda: self.lambda.to_bytes(),
             totient: self.totient.to_bytes(),
@@ -108,11 +108,12 @@ impl SecretKey {
         serde_bare::to_vec(&bytes).unwrap()
     }
 
-    /// Convert a byte representation to a secret key
+    /// Convert a byte representation to a decryption key
     pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Result<Self, String> {
         let data = data.as_ref();
-        let bytes = serde_bare::from_slice::<SecretKeyBytes>(data).map_err(|e| e.to_string())?;
-        let pk = PublicKey::from_bytes(bytes.n.as_slice());
+        let bytes =
+            serde_bare::from_slice::<DecryptionKeyBytes>(data).map_err(|e| e.to_string())?;
+        let pk = EncryptionKey::from_bytes(bytes.n.as_slice());
         Ok(Self {
             pk,
             lambda: BigNumber::from_slice(bytes.lambda.as_slice()),
@@ -143,7 +144,7 @@ impl SecretKey {
 }
 
 #[derive(Serialize, Deserialize)]
-struct SecretKeyBytes {
+struct DecryptionKeyBytes {
     n: Vec<u8>,
     lambda: Vec<u8>,
     totient: Vec<u8>,

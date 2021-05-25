@@ -13,7 +13,7 @@ repository = "https://github.com/mikelodder7/paillier-rs"
 version = "0.1.0"
 
 [features]
-default = ["gmp"]
+default = ["rust"]
 gmp = ["unknown_order/gmp"]
 openssl = ["unknown_order/openssl"]
 rust = ["unknown_order/rust"]
