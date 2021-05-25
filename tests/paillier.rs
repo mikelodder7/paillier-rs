@@ -19,7 +19,7 @@ fn b10(s: &str) -> BigNumber {
 
 #[test]
 fn encrypt() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -48,7 +48,7 @@ fn encrypt() {
 
 #[test]
 fn add() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -75,7 +75,7 @@ fn add() {
 
 #[test]
 fn mul() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -99,7 +99,7 @@ fn mul() {
 
 #[test]
 fn serialization() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -133,7 +133,7 @@ fn serialization() {
 
 #[test]
 fn bytes() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -156,7 +156,7 @@ fn bytes() {
 
 #[test]
 fn proof() {
-    let res = SecretKey::with_safe_primes(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = SecretKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = PublicKey::from(&sk);
@@ -181,11 +181,15 @@ fn proof() {
 
     assert!(proof.verify::<sha2::Sha256>(&pk, nonce.as_slice()));
 
-    let bytes = proof.to_bytes();
-    let res = ProofSquareFree::from_bytes(bytes);
+    let mut bytes = proof.to_bytes();
+    let res = ProofSquareFree::from_bytes(bytes.as_slice());
     assert!(res.is_ok());
     let proof1 = res.unwrap();
     assert_eq!(proof1.to_bytes(), proof.to_bytes());
+
+    bytes[0] = bytes[1];
+    let res = ProofSquareFree::from_bytes(bytes.as_slice());
+    assert!(res.is_err());
 }
 
 #[test]
@@ -204,4 +208,15 @@ fn all() {
     assert!(res.is_some());
     let m1 = res.unwrap();
     assert_eq!(m1, m);
+
+    // bad messages
+    let nn1: BigNumber = pk.nn() + 1;
+    let nn = pk.nn().to_bytes();
+    let nn1_bytes = nn1.to_bytes();
+    let bad_messages: [&[u8]; 3] = [b"", nn.as_slice(), nn1_bytes.as_slice()];
+
+    for b in &bad_messages {
+        let res = pk.encrypt(&b, None);
+        assert!(res.is_none());
+    }
 }

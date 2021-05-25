@@ -19,15 +19,31 @@ pub struct SecretKey {
 impl SecretKey {
     /// Create a new random key
     pub fn random() -> Option<Self> {
-        let p = BigNumber::safe_prime(1024);
-        let q = BigNumber::safe_prime(1024);
-        Self::with_safe_primes(&p, &q)
+        let mut p = BigNumber::safe_prime(1024);
+        let mut q = BigNumber::safe_prime(1024);
+        let res = Self::with_safe_primes_unchecked(&p, &q);
+        // Make sure the primes are zero'd
+        p.zeroize();
+        q.zeroize();
+        res
     }
 
-    /// Create a new key from two safe primes
+    /// Create a new key from two safe primes.
+    /// `p` and `q` are checked if prime
     pub fn with_safe_primes(p: &BigNumber, q: &BigNumber) -> Option<Self> {
-        debug_assert!(p.is_prime());
-        debug_assert!(q.is_prime());
+        if !p.is_prime() || !q.is_prime() {
+            return None;
+        }
+        Self::with_safe_primes_unchecked(p, q)
+    }
+
+    /// Create a new key from two safe primes,
+    /// `p` and `q` are not checked to see if they are safe primes
+    pub fn with_safe_primes_unchecked(p: &BigNumber, q: &BigNumber) -> Option<Self> {
+        // Paillier doesn't work if p == q
+        if p == q {
+            return None;
+        }
         let pm1: BigNumber = p - 1;
         let qm1: BigNumber = q - 1;
         let n = p * q;
@@ -78,7 +94,10 @@ impl SecretKey {
         })
     }
 
-    /// Get this key's byte representation
+    /// Get this key's byte representation.
+    ///
+    /// This measures about (n * 4) + 4 bytes or i.e.
+    /// for a 2048 bit modulus == 1032 bytes.
     pub fn to_bytes(&self) -> Vec<u8> {
         let bytes = SecretKeyBytes {
             n: self.pk.n.to_bytes(),
