@@ -1,6 +1,6 @@
 [package]
 authors = ["Michael Lodder <redmike7@gmail.com>"]
-categories = ["cryptography", "encryption"]
+categories = ["cryptography", "algorithms"]
 description = """The Paillier cryptosystem is a public key crytosystem based on composite degree residuosity classes.
 Paillier ciphertexts are homorphic in that the can be added.
 """
