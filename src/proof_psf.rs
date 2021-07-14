@@ -18,6 +18,7 @@ use unknown_order::BigNumber;
 ///
 /// This proof is used in <https://eprint.iacr.org/2020/540> and
 /// <https://eprint.iacr.org/2017/552> as part of their DKG.
+/// A paillier key generator can prove the parameters where created honestly.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProofSquareFree(Vec<BigNumber>);
 
@@ -68,6 +69,7 @@ impl ProofSquareFree {
 
 /// Computes `l` deterministic numbers as challenges
 /// for `ProofSquareFree` which proves that the Paillier modulus is square free
+#[allow(clippy::many_single_char_names)]
 fn generate_challenges<D: Digest>(pk: &EncryptionKey, nonce: &[u8]) -> Vec<BigNumber> {
     let b = pk.n.to_bytes().len();
     // Check that a modulus is not too small

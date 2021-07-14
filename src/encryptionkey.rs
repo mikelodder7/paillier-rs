@@ -60,6 +60,7 @@ impl EncryptionKey {
 
     /// Encrypt a given message with the encryption key and optionally use a random value
     /// x must be less than N
+    #[allow(clippy::many_single_char_names)]
     pub fn encrypt<M>(&self, x: M, r: Option<Nonce>) -> Option<(Ciphertext, Nonce)>
     where
         M: AsRef<[u8]>,

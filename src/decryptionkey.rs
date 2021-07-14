@@ -39,6 +39,7 @@ impl DecryptionKey {
 
     /// Create a new key from two safe primes,
     /// `p` and `q` are not checked to see if they are safe primes
+    #[allow(clippy::many_single_char_names)]
     pub fn with_safe_primes_unchecked(p: &BigNumber, q: &BigNumber) -> Option<Self> {
         // Paillier doesn't work if p == q
         if p == q {
@@ -66,15 +67,12 @@ impl DecryptionKey {
         let uu = pk.l(&tt).map(|uu| uu.invert(&n));
         match uu {
             None => None,
-            Some(u_inv) => match u_inv {
-                None => None,
-                Some(u) => Some(DecryptionKey {
-                    pk,
-                    lambda,
-                    totient,
-                    u,
-                }),
-            },
+            Some(u_inv) => u_inv.map(|u| DecryptionKey {
+                pk,
+                lambda,
+                totient,
+                u,
+            }),
         }
     }
 
