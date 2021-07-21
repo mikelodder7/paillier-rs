@@ -10,6 +10,9 @@ pub struct EncryptionKey {
     pub(crate) nn: BigNumber, // N^2
 }
 
+#[cfg(feature = "wasm")]
+wasm_slice_impl!(EncryptionKey);
+
 impl Serialize for EncryptionKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -116,13 +119,13 @@ impl EncryptionKey {
     }
 
     /// Convert a  byte representation to a encryption key
-    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Self {
+    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Result<Self, String> {
         let data = data.as_ref();
         let n = BigNumber::from_slice(data);
-        Self {
+        Ok(Self {
             n: n.clone(),
             nn: &n * &n,
-        }
+        })
     }
 
     /// The Paillier modulus

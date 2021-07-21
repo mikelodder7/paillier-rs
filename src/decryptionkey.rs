@@ -16,6 +16,9 @@ pub struct DecryptionKey {
     pub(crate) u: BigNumber,
 }
 
+#[cfg(feature = "wasm")]
+wasm_slice_impl!(DecryptionKey);
+
 impl DecryptionKey {
     /// Create a new random key
     pub fn random() -> Option<Self> {
@@ -111,7 +114,7 @@ impl DecryptionKey {
         let data = data.as_ref();
         let bytes =
             serde_bare::from_slice::<DecryptionKeyBytes>(data).map_err(|e| e.to_string())?;
-        let pk = EncryptionKey::from_bytes(bytes.n.as_slice());
+        let pk = EncryptionKey::from_bytes(bytes.n.as_slice())?;
         Ok(Self {
             pk,
             lambda: BigNumber::from_slice(bytes.lambda.as_slice()),

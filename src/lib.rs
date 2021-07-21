@@ -15,6 +15,9 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[cfg(feature = "wasm")]
+#[macro_use]
+mod macros;
 mod decryptionkey;
 mod encryptionkey;
 mod proof_psf;

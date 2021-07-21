@@ -24,6 +24,9 @@ pub struct ProofSquareFree(Vec<BigNumber>);
 
 const L: usize = 13;
 
+#[cfg(feature = "wasm")]
+wasm_slice_impl!(ProofSquareFree);
+
 impl ProofSquareFree {
     /// Generate a new SF proof.
     /// GG20 paper uses lots of values for the entropy like
