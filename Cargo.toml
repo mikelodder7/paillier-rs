@@ -33,6 +33,7 @@ zeroize = { version = "1.4", features = ["zeroize_derive"] }
 elliptic-curve = "0.9"
 hex = "0.4"
 k256 = { version = "0.8", features = ["arithmetic", "zeroize"] }
+rand = "0.8"
 multibase = "0.9"
 sha2 = "0.9"
 serde_json = "1.0"

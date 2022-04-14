@@ -140,7 +140,7 @@ fn bytes() {
 
     let bytes = pk.to_bytes();
     assert_eq!(bytes.len(), 256);
-    let pk1 = EncryptionKey::from_bytes(bytes.as_slice());
+    let pk1 = EncryptionKey::from_bytes(bytes.as_slice()).unwrap();
     assert_eq!(pk1.n(), pk.n());
 
     let bytes = sk.to_bytes();
