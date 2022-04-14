@@ -35,7 +35,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions-rs/toochain@v1
       with:
-        toolchain: 1.60.0
+        toolchain: stable
         components: clippy
         override: true
         profile: minimal
@@ -86,3 +86,4 @@ jobs:
       - run: cargo test --target ${{ matrix.target }} --no-default-features --features=rust
       - run: cargo test --target ${{ matrix.target }} --no-default-features --features=openssl
       - run: cargo test --target ${{ matrix.target }} --no-default-features --features=gmp
+
