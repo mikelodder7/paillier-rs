@@ -156,6 +156,8 @@ fn bytes() {
 
 #[test]
 fn proof() {
+    use k256::elliptic_curve::group::prime::PrimeCurveAffine;
+
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
