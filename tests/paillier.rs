@@ -19,7 +19,7 @@ fn b10(s: &str) -> BigNumber {
 
 #[test]
 fn encrypt() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
@@ -48,7 +48,7 @@ fn encrypt() {
 
 #[test]
 fn add() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
@@ -75,7 +75,7 @@ fn add() {
 
 #[test]
 fn mul() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
@@ -99,7 +99,7 @@ fn mul() {
 
 #[test]
 fn serialization() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
@@ -133,7 +133,7 @@ fn serialization() {
 
 #[test]
 fn bytes() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
@@ -156,7 +156,7 @@ fn bytes() {
 
 #[test]
 fn proof() {
-    let res = DecryptionKey::with_safe_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);

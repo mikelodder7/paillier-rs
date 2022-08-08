@@ -22,28 +22,28 @@ wasm_slice_impl!(DecryptionKey);
 impl DecryptionKey {
     /// Create a new random key
     pub fn random() -> Option<Self> {
-        let mut p = BigNumber::safe_prime(1024);
-        let mut q = BigNumber::safe_prime(1024);
-        let res = Self::with_safe_primes_unchecked(&p, &q);
+        let mut p = BigNumber::prime(1024);
+        let mut q = BigNumber::prime(1024);
+        let res = Self::with_primes_unchecked(&p, &q);
         // Make sure the primes are zero'd
         p.zeroize();
         q.zeroize();
         res
     }
 
-    /// Create a new key from two safe primes.
+    /// Create a new key from two primes.
     /// `p` and `q` are checked if prime
-    pub fn with_safe_primes(p: &BigNumber, q: &BigNumber) -> Option<Self> {
+    pub fn with_primes(p: &BigNumber, q: &BigNumber) -> Option<Self> {
         if !p.is_prime() || !q.is_prime() {
             return None;
         }
-        Self::with_safe_primes_unchecked(p, q)
+        Self::with_primes_unchecked(p, q)
     }
 
     /// Create a new key from two safe primes,
     /// `p` and `q` are not checked to see if they are safe primes
     #[allow(clippy::many_single_char_names)]
-    pub fn with_safe_primes_unchecked(p: &BigNumber, q: &BigNumber) -> Option<Self> {
+    pub fn with_primes_unchecked(p: &BigNumber, q: &BigNumber) -> Option<Self> {
         // Paillier doesn't work if p == q
         if p == q {
             return None;

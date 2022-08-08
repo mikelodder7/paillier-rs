@@ -6,7 +6,7 @@ use zeroize::Zeroize;
 /// A Paillier encryption key
 #[derive(Clone, Debug, Zeroize)]
 pub struct EncryptionKey {
-    pub(crate) n: BigNumber, // N = p * q, where p = 2p'+1, q = 2q'+1, p,q,p',q' are primes
+    pub(crate) n: BigNumber,  // N = p * q, where p,q are primes
     pub(crate) nn: BigNumber, // N^2
 }
 
