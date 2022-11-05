@@ -14,6 +14,13 @@ pub struct DecryptionKey {
     pub(crate) totient: BigNumber,
     /// L((N + 1)^lambda mod N^2)-1 mod N
     pub(crate) u: BigNumber,
+    // N^-1 mod phi(N)
+    // Useful for decrypting and retrieving the randomness
+    pub(crate) n_inv: BigNumber,
+    // p
+    pub(crate) p: BigNumber,
+    // q
+    pub(crate) q: BigNumber,
 }
 
 #[cfg(feature = "wasm")]
@@ -66,6 +73,8 @@ impl DecryptionKey {
         let t: BigNumber = &n + 1;
         let tt = t.modpow(&lambda, &nn);
 
+        let n_inv = n.invert(&totient)?;
+
         // L((N+1)^lambda mod N^2)^-1 mod N
         let uu = pk.l(&tt).map(|uu| uu.invert(&n));
         match uu {
@@ -75,6 +84,9 @@ impl DecryptionKey {
                 lambda,
                 totient,
                 u,
+                n_inv,
+                p: p.clone(),
+                q: q.clone(),
             }),
         }
     }
@@ -97,14 +109,17 @@ impl DecryptionKey {
 
     /// Get this key's byte representation.
     ///
-    /// This measures about (n * 4) + 4 bytes or i.e.
-    /// for a 2048 bit modulus == 1032 bytes.
+    /// This measures about (n * 6) + 7 * 2 bytes or i.e.
+    /// for a 2048 bit modulus == 1550 bytes.
     pub fn to_bytes(&self) -> Vec<u8> {
         let bytes = DecryptionKeyBytes {
             n: self.pk.n.to_bytes(),
             lambda: self.lambda.to_bytes(),
             totient: self.totient.to_bytes(),
             u: self.u.to_bytes(),
+            n_inv: self.n_inv.to_bytes(),
+            p: self.p.to_bytes(),
+            q: self.q.to_bytes(),
         };
         serde_bare::to_vec(&bytes).unwrap()
     }
@@ -120,6 +135,9 @@ impl DecryptionKey {
             lambda: BigNumber::from_slice(bytes.lambda.as_slice()),
             totient: BigNumber::from_slice(bytes.totient.as_slice()),
             u: BigNumber::from_slice(bytes.u.as_slice()),
+            n_inv: BigNumber::from_slice(bytes.n_inv.as_slice()),
+            p: BigNumber::from_slice(bytes.p.as_slice()),
+            q: BigNumber::from_slice(bytes.q.as_slice()),
         })
     }
 
@@ -131,6 +149,21 @@ impl DecryptionKey {
     /// The Paillier `lambda`
     pub fn lambda(&self) -> &BigNumber {
         &self.lambda
+    }
+
+    /// `N^(-1) mod phi(N)`
+    pub fn n_inv(&self) -> &BigNumber {
+        &self.n_inv
+    }
+
+    /// Prime factor `p` of the Paillier modulus
+    pub fn p(&self) -> &BigNumber {
+        &self.p
+    }
+
+    /// Prime factor `q` of the Paillier modulus
+    pub fn q(&self) -> &BigNumber {
+        &self.q
     }
 
     /// The Paillier `totient`
@@ -150,4 +183,7 @@ struct DecryptionKeyBytes {
     lambda: Vec<u8>,
     totient: Vec<u8>,
     u: Vec<u8>,
+    n_inv: Vec<u8>,
+    p: Vec<u8>,
+    q: Vec<u8>,
 }
