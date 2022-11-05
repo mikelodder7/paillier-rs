@@ -1,4 +1,5 @@
 use crate::{mod_in, Ciphertext, EncryptionKey};
+use rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
@@ -31,6 +32,18 @@ impl DecryptionKey {
     pub fn random() -> Option<Self> {
         let mut p = BigNumber::prime(1024);
         let mut q = BigNumber::prime(1024);
+        let res = Self::with_primes_unchecked(&p, &q);
+        // Make sure the primes are zero'd
+        p.zeroize();
+        q.zeroize();
+        res
+    }
+
+    #[cfg(any(feature = "gmp", feature = "rust"))]
+    /// Create a new decryption key using the provided `rng`
+    pub fn from_rng_with_safe_primes(rng: &mut (impl CryptoRng + RngCore)) -> Option<Self> {
+        let mut p = BigNumber::safe_prime_from_rng(1024, rng);
+        let mut q = BigNumber::safe_prime_from_rng(1024, rng);
         let res = Self::with_primes_unchecked(&p, &q);
         // Make sure the primes are zero'd
         p.zeroize();
