@@ -4,7 +4,7 @@ use unknown_order::BigNumber;
 use zeroize::Zeroize;
 
 /// A Paillier decryption key
-#[derive(Clone, Debug, Deserialize, Serialize, Zeroize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct DecryptionKey {
     pub(crate) pk: EncryptionKey,

@@ -4,7 +4,7 @@ use unknown_order::BigNumber;
 use zeroize::Zeroize;
 
 /// A Paillier encryption key
-#[derive(Clone, Debug, Zeroize)]
+#[derive(Clone, Debug, PartialEq, Zeroize)]
 pub struct EncryptionKey {
     pub(crate) n: BigNumber,  // N = p * q, where p,q are primes
     pub(crate) nn: BigNumber, // N^2
