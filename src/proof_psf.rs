@@ -1,4 +1,6 @@
 use crate::{mod_in, DecryptionKey, EncryptionKey};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use digest::{
     generic_array::{typenum::Unsigned, GenericArray},
     Digest,
