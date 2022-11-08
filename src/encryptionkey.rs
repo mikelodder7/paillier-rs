@@ -61,6 +61,11 @@ impl EncryptionKey {
         Some((x - &one) / &self.n)
     }
 
+    pub(crate) fn l_unchecked(&self, x: &BigNumber) -> BigNumber {
+        //(x - 1) / N
+        (x - &BigNumber::one()) / &self.n
+    }
+
     /// Encrypt a given message with the encryption key and optionally use a random value
     /// x must be less than N
     #[allow(clippy::many_single_char_names)]
@@ -73,19 +78,35 @@ impl EncryptionKey {
             return None;
         }
 
-        let r = r.unwrap_or_else(|| Nonce::random(&self.n));
+        let r = match r {
+            Some(r) => {
+                if !mod_in(&r, &self.n) {
+                    return None;
+                }
+                r
+            }
+            None => Nonce::random(&self.n),
+        };
 
-        if !mod_in(&r, &self.n) {
-            return None;
-        }
+        Some((self.encrypt_unchecked(&xx, &r), r))
+    }
 
-        // a = (N+1)^m mod N^2
-        let a = (&self.n + BigNumber::one()).modpow(&xx, &self.nn);
-        // b = r^N mod N^2
-        let b = &r.modpow(&self.n, &self.nn);
+    /// Encrypt a given message with the encryption key and a provided random value
+    /// m can be greater than N
+    pub fn encrypt_unchecked(&self, m: &BigNumber, r: &Nonce) -> Ciphertext {
+        debug_assert!(mod_in(r, &self.n));
 
-        let c = a.modmul(&b, &self.nn);
-        Some((c, r))
+        // g^m mod N^2 = (N + 1)^m mod N^2 = m N + 1 mod N^2
+        // See Prop 11.26, Pg. 385 of Intro to Modern Cryptography
+        let g_m = m
+            .modmul(&self.n, &self.nn)
+            .modadd(&BigNumber::one(), &self.nn);
+
+        // r^N mod N^2
+        let r_n = &r.modpow(&self.n, &self.nn);
+
+        // c = g^m r^n mod N^2
+        g_m.modmul(r_n, &self.nn)
     }
 
     /// Combines two Paillier ciphertexts
@@ -101,6 +122,12 @@ impl EncryptionKey {
         Some(c1.modmul(c2, &self.nn))
     }
 
+    /// Combines two Paillier ciphertexts (without checks)
+    /// commonly denoted in text as c1 \bigoplus c2
+    pub fn add_unchecked(&self, c1: &Ciphertext, c2: &Ciphertext) -> Ciphertext {
+        c1.modmul(c2, &self.nn)
+    }
+
     /// Equivalent to adding two Paillier exponents
     pub fn mul(&self, c: &Ciphertext, a: &BigNumber) -> Option<Ciphertext> {
         // constant time check
@@ -111,6 +138,11 @@ impl EncryptionKey {
         }
 
         Some(c.modpow(a, &self.nn))
+    }
+
+    /// Equivalent to adding two Paillier exponents without checks
+    pub fn mul_unchecked(&self, c: &Ciphertext, a: &BigNumber) -> Ciphertext {
+        c.modpow(a, &self.nn)
     }
 
     /// Get this key's byte representation

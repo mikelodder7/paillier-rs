@@ -82,42 +82,73 @@ impl DecryptionKey {
         }
         let totient = &pm1 * &qm1;
 
-        // (N+1)^lambda mod N^2
-        let t: BigNumber = &n + 1;
-        let tt = t.modpow(&lambda, &nn);
+        // (N+1)^lambda mod N^2 = lambda N + 1 mod N^2
+        let tt = lambda.modmul(&n, &nn).modadd(&BigNumber::one(), &nn);
 
         let n_inv = n.invert(&totient)?;
 
         // L((N+1)^lambda mod N^2)^-1 mod N
-        let uu = pk.l(&tt).map(|uu| uu.invert(&n));
-        match uu {
-            None => None,
-            Some(u_inv) => u_inv.map(|u| DecryptionKey {
-                pk,
-                lambda,
-                totient,
-                u,
-                n_inv,
-                p: p.clone(),
-                q: q.clone(),
-            }),
-        }
+        let u = pk.l(&tt)?.invert(&n)?;
+
+        Some(DecryptionKey {
+            pk,
+            lambda,
+            totient,
+            u,
+            n_inv,
+            p: p.clone(),
+            q: q.clone(),
+        })
     }
 
     /// Reverse ciphertext to plaintext
     pub fn decrypt(&self, c: &Ciphertext) -> Option<Vec<u8>> {
-        if !mod_in(&c, &self.pk.nn) {
+        if !mod_in(c, &self.pk.nn) {
             return None;
         }
 
         // a = c^\lambda mod n^2
         let a = c.modpow(&self.lambda, &self.pk.nn);
+
         // ell = L(a, N)
-        self.pk.l(&a).map(|l| {
-            // m = lu = L(a)*u = L(c^\lamba*)u mod n
-            let m = l.modmul(&self.u, &self.pk.n);
-            m.to_bytes()
-        })
+        let ell = self.pk.l(&a)?;
+
+        // m = lu = L(a)*u = L(c^\lamba*)u mod n
+        let m = ell.modmul(&self.u, &self.pk.n);
+
+        Some(m.to_bytes())
+    }
+
+    /// Reverse ciphertext to plaintext
+    pub fn decrypt_unchecked(&self, c: &Ciphertext) -> BigNumber {
+        debug_assert!(mod_in(c, &self.pk.nn));
+
+        // a = c^\lambda mod n^2
+        let a = c.modpow(&self.lambda, &self.pk.nn);
+
+        // ell = L(a, N)
+        let ell = self.pk.l_unchecked(&a);
+
+        // m = lu = L(a)*u = L(c^\lamba*)u mod n
+        ell.modmul(&self.u, &self.pk.n)
+    }
+
+    /// Reverse ciphertext to plaintext and also retrieve the randomness
+    pub fn decrypt_with_randomness(&self, c: &Ciphertext) -> (BigNumber, BigNumber) {
+        let n = &self.pk.n;
+        let nn = &self.pk.nn;
+
+        let m = self.decrypt_unchecked(c);
+
+        // g^-m = (N + 1)^-m = 1 - m N (mod N^2)
+        let g_m_inv = BigNumber::one().modsub(&m.modmul(n, nn), nn);
+
+        // r^N = c . g^-m (mod N^2)
+        let r_n = c.modmul(&g_m_inv, nn);
+
+        let r = r_n.modpow(&self.n_inv, n);
+
+        (m, r)
     }
 
     /// Get this key's byte representation.

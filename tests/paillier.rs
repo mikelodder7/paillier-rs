@@ -144,7 +144,7 @@ fn bytes() {
     assert_eq!(pk1.n(), pk.n());
 
     let bytes = sk.to_bytes();
-    assert_eq!(bytes.len(), 1032);
+    assert_eq!(bytes.len(), 1550);
     let res = DecryptionKey::from_bytes(bytes.as_slice());
     assert!(res.is_ok());
     let sk1 = res.unwrap();
