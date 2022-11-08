@@ -1,4 +1,6 @@
 use crate::{mod_in, Ciphertext, EncryptionKey};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use unknown_order::BigNumber;

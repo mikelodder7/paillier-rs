@@ -5,6 +5,7 @@
 //! Paillier-rs contains Paillier's cryptosystem (1999)
 //! Public-Key Cryptosystems based on composite degree residuosity class.
 //! See <http://citeseerx.ist.psu.edu/download?doi=10.1.1.4035&rep=rep1&type=pdf>
+#![no_std]
 #![deny(
     warnings,
     missing_docs,
@@ -14,6 +15,8 @@
     trivial_numeric_casts
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+
+extern crate alloc;
 
 #[cfg(feature = "wasm")]
 #[macro_use]

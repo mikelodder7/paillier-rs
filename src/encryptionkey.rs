@@ -1,4 +1,6 @@
 use crate::{mod_in, Ciphertext, DecryptionKey, Nonce};
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
