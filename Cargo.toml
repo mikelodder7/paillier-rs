@@ -17,7 +17,7 @@ default = ["openssl"]
 gmp = ["unknown_order/gmp"]
 openssl = ["unknown_order/openssl"]
 rust = ["unknown_order/rust"]
-wasm = ["getrandom", "rand", "wasm-bindgen"]
+wasm = ["getrandom", "rand", "wasm-bindgen", "serde-wasm-bindgen"]
 
 [dependencies]
 digest = "0.9"
@@ -28,6 +28,7 @@ serde_bare = "0.5"
 unknown_order = { version = "0.5.0", default-features = false }
 wasm-bindgen = { version = "0.2", default-features = false, features = ["serde-serialize"], optional = true }
 zeroize = { version = "1.4", features = ["zeroize_derive"] }
+serde-wasm-bindgen = { version = "0.4", optional = true }
 
 [dev-dependencies]
 elliptic-curve = "0.9"
