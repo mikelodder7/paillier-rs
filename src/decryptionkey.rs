@@ -50,12 +50,7 @@ impl DecryptionKey {
         }
         let pm1: BigNumber = p - 1;
         let qm1: BigNumber = q - 1;
-        let n = p * q;
-        let nn = &n * &n;
-        let pk = EncryptionKey {
-            n: n.clone(),
-            nn: nn.clone(),
-        };
+        let pk = EncryptionKey::from_n(p * q);
         let lambda = pm1.lcm(&qm1);
         if lambda.is_zero() {
             return None;
@@ -63,11 +58,11 @@ impl DecryptionKey {
         let totient = &pm1 * &qm1;
 
         // (N+1)^lambda mod N^2
-        let t: BigNumber = &n + 1;
-        let tt = t.modpow(&lambda, &nn);
+        let t: BigNumber = pk.n() + 1;
+        let tt = t.modpow(&lambda, pk.nn());
 
         // L((N+1)^lambda mod N^2)^-1 mod N
-        let uu = pk.l(&tt).map(|uu| uu.invert(&n));
+        let uu = pk.l(&tt).map(|uu| uu.invert(pk.n()));
         match uu {
             None => None,
             Some(u_inv) => u_inv.map(|u| DecryptionKey {

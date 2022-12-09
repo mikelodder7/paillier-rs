@@ -28,10 +28,7 @@ impl<'de> Deserialize<'de> for EncryptionKey {
         D: Deserializer<'de>,
     {
         let n = BigNumber::deserialize(deserializer)?;
-        Ok(Self {
-            n: n.clone(),
-            nn: &n * &n,
-        })
+        Ok(Self::from_n(n))
     }
 }
 
@@ -122,10 +119,12 @@ impl EncryptionKey {
     pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Result<Self, String> {
         let data = data.as_ref();
         let n = BigNumber::from_slice(data);
-        Ok(Self {
-            n: n.clone(),
-            nn: &n * &n,
-        })
+        Ok(Self::from_n(n))
+    }
+
+    /// Constructs encryption key from the Paillier modulus
+    pub fn from_n(n: BigNumber) -> Self {
+        Self { nn: &n * &n, n }
     }
 
     /// The Paillier modulus
