@@ -163,7 +163,7 @@ fn proof() {
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
-    let ssk = k256::SecretKey::random(rand::rngs::OsRng::default());
+    let ssk = k256::SecretKey::random(&mut rand::rngs::OsRng);
     let spk = ssk.public_key();
     let mut nonce = Vec::new();
     nonce.extend_from_slice(
@@ -189,7 +189,7 @@ fn proof() {
     let proof1 = res.unwrap();
     assert_eq!(proof1.to_bytes(), proof.to_bytes());
 
-    bytes[0] = bytes[1];
+    bytes[0] = 128;
     let res = ProofSquareFree::from_bytes(bytes.as_slice());
     assert!(res.is_err());
 }

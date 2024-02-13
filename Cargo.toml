@@ -10,10 +10,11 @@ license = "Apache-2.0"
 name = "libpaillier"
 readme = "README.md"
 repository = "https://github.com/mikelodder7/paillier-rs"
-version = "0.5.0"
+version = "0.6.0"
 
 [features]
-default = ["openssl"]
+default = ["crypto"]
+crypto = ["unknown_order/crypto"]
 gmp = ["unknown_order/gmp"]
 openssl = ["unknown_order/openssl"]
 rust = ["unknown_order/rust"]
@@ -25,16 +26,16 @@ getrandom = { version = "0.2", features = ["js"], optional = true }
 rand = { version = "0.8", optional = true }
 serde = { version = "1.0", features = ["serde_derive"] }
 serde_bare = "0.5"
-unknown_order = { version = "0.6.0", default-features = false }
+unknown_order = { version = "0.8", default-features = false  }
 wasm-bindgen = { version = "0.2", default-features = false, features = ["serde-serialize"], optional = true }
 zeroize = { version = "1.5", features = ["zeroize_derive"] }
 
 [dev-dependencies]
-elliptic-curve = "0.12"
+elliptic-curve = "0.13"
 hex = "0.4"
-k256 = { version = "0.11", features = ["arithmetic"] }
+k256 = { version = "0.13", features = ["arithmetic"] }
 rand = "0.8"
 multibase = "0.9"
-sha2 = "0.10.6"
+sha2 = "0.10"
 serde_json = "1.0"
 unicase = "2.6"
