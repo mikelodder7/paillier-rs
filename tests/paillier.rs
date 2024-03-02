@@ -17,7 +17,6 @@ fn b10(s: &str) -> BigNumber {
     BigNumber::from_slice(bytes.as_slice())
 }
 
-#[test]
 fn encrypt() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
@@ -46,7 +45,6 @@ fn encrypt() {
     }
 }
 
-#[test]
 fn add() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
@@ -73,7 +71,6 @@ fn add() {
     assert_eq!(m3, BigNumber::from(13));
 }
 
-#[test]
 fn mul() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
     assert!(res.is_some());
@@ -97,7 +94,6 @@ fn mul() {
     assert_eq!(m3, BigNumber::from(42));
 }
 
-#[test]
 fn serialization() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
@@ -131,7 +127,6 @@ fn serialization() {
     assert_eq!(sk.n(), sk1.n());
 }
 
-#[test]
 fn bytes() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
     assert!(res.is_some());
@@ -154,7 +149,6 @@ fn bytes() {
     assert_eq!(sk.n(), sk1.n());
 }
 
-#[test]
 fn proof() {
     use k256::elliptic_curve::group::prime::PrimeCurveAffine;
 
@@ -194,7 +188,6 @@ fn proof() {
     assert!(res.is_err());
 }
 
-#[test]
 fn all() {
     let res = DecryptionKey::random();
     assert!(res.is_some());
@@ -221,4 +214,46 @@ fn all() {
         let res = pk.encrypt(&b, None);
         assert!(res.is_none());
     }
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_encrypt() {
+    encrypt()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_add() {
+    add()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_mul() {
+    mul()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_serialization() {
+    serialization()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_bytes() {
+    bytes()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_proof() {
+    proof()
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn test_all() {
+    all()
 }
