@@ -1,4 +1,4 @@
-use crate::{mod_in, DecryptionKey, EncryptionKey};
+use crate::{mod_in, DecryptionKey, EncryptionKey, error::*};
 use digest::{
     generic_array::{typenum::Unsigned, GenericArray},
     Digest,
@@ -59,14 +59,14 @@ impl ProofSquareFree {
 
     /// Get this proof's byte representation
     pub fn to_bytes(&self) -> Vec<u8> {
-        serde_bare::to_vec(&self.0).unwrap()
+        postcard::to_stdvec(&self.0).unwrap()
     }
 
     /// Convert a byte representation to a proof
-    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Result<Self, String> {
+    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> PaillierResult<Self> {
         let data = data.as_ref();
-        let messages = serde_bare::from_slice::<Vec<BigNumber>>(data).map_err(|e| e.to_string())?;
-        Ok(Self(messages))
+        let out = postcard::from_bytes::<Vec<BigNumber>>(data).map(Self)?;
+        Ok(out)
     }
 }
 
@@ -119,7 +119,7 @@ fn hash_pieces<D: Digest>(data: &[&[u8]]) -> GenericArray<u8, D::OutputSize> {
     // hash each piece individually to avoid potential padding attacks
     // then hash all the outputs together
     let mut hasher = D::new();
-    data.iter().map(|datum| D::digest(&datum)).for_each(|d| {
+    data.iter().map(|datum| D::digest(datum)).for_each(|d| {
         hasher.update(d.as_slice());
     });
     hasher.finalize()

@@ -1,4 +1,4 @@
-use crate::{mod_in, Ciphertext, EncryptionKey};
+use crate::{mod_in, Ciphertext, EncryptionKey, error::*};
 use serde::{Deserialize, Serialize};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
@@ -62,7 +62,7 @@ impl DecryptionKey {
         let tt = t.modpow(&lambda, pk.nn());
 
         // L((N+1)^lambda mod N^2)^-1 mod N
-        let uu = pk.l(&tt).map(|uu| uu.invert(pk.n()));
+        let uu = pk.l(&tt).map(|uu| uu.invert(pk.n())).ok();
         match uu {
             None => None,
             Some(u_inv) => u_inv.map(|u| DecryptionKey {
@@ -75,9 +75,9 @@ impl DecryptionKey {
     }
 
     /// Reverse ciphertext to plaintext
-    pub fn decrypt(&self, c: &Ciphertext) -> Option<Vec<u8>> {
-        if !mod_in(&c, &self.pk.nn) {
-            return None;
+    pub fn decrypt(&self, c: &Ciphertext) -> PaillierResult<Vec<u8>> {
+        if !mod_in(c, &self.pk.nn) {
+            return Err(PaillierError::InvalidCiphertext);
         }
 
         // a = c^\lambda mod n^2
@@ -101,14 +101,14 @@ impl DecryptionKey {
             totient: self.totient.to_bytes(),
             u: self.u.to_bytes(),
         };
-        serde_bare::to_vec(&bytes).unwrap()
+        postcard::to_stdvec(&bytes).unwrap()
     }
 
     /// Convert a byte representation to a decryption key
-    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> Result<Self, String> {
+    pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> PaillierResult<Self> {
         let data = data.as_ref();
         let bytes =
-            serde_bare::from_slice::<DecryptionKeyBytes>(data).map_err(|e| e.to_string())?;
+            postcard::from_bytes::<DecryptionKeyBytes>(data)?;
         let pk = EncryptionKey::from_bytes(bytes.n.as_slice())?;
         Ok(Self {
             pk,

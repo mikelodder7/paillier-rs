@@ -20,8 +20,10 @@
 mod macros;
 mod decryptionkey;
 mod encryptionkey;
+mod error;
 mod proof_psf;
 
+pub use error::*;
 pub use unknown_order;
 
 use unknown_order::BigNumber;
