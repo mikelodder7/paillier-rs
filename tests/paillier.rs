@@ -27,11 +27,11 @@ fn encrypt() {
 
     let m = b"this is a test message";
     let res = pk.encrypt(m, None);
-    assert!(res.is_some());
+    assert!(res.is_ok());
 
     let (c, _) = res.unwrap();
     let res = sk.decrypt(&c);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let m1 = res.unwrap();
     assert_eq!(m1, m);
 
@@ -43,7 +43,7 @@ fn encrypt() {
 
     for b in &bad_messages {
         let res = pk.encrypt(&b, None);
-        assert!(res.is_none());
+        assert!(res.is_err());
     }
 }
 
@@ -60,16 +60,16 @@ fn add() {
 
     let res1 = pk.encrypt(&m1.to_bytes(), None);
     let res2 = pk.encrypt(&m2.to_bytes(), None);
-    assert!(res1.is_some());
-    assert!(res2.is_some());
+    assert!(res1.is_ok());
+    assert!(res2.is_ok());
 
     let (c1, _) = res1.unwrap();
     let (c2, _) = res2.unwrap();
     let res = pk.add(&c1, &c2);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let c3 = res.unwrap();
     let res = sk.decrypt(&c3);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let bytes = res.unwrap();
     let m3 = BigNumber::from_slice(bytes);
     assert_eq!(m3, BigNumber::from(13));
@@ -87,14 +87,14 @@ fn mul() {
     let m2 = BigNumber::from(6);
 
     let res1 = pk.encrypt(&m1.to_bytes(), None);
-    assert!(res1.is_some());
+    assert!(res1.is_ok());
 
     let (c1, _) = res1.unwrap();
     let res = pk.mul(&c1, &m2);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let c2 = res.unwrap();
     let res = sk.decrypt(&c2);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let bytes = res.unwrap();
     let m3 = BigNumber::from_slice(bytes.as_slice());
     assert_eq!(m3, BigNumber::from(42));
@@ -183,20 +183,20 @@ fn proof() {
     nonce.extend_from_slice(spk.as_affine().to_encoded_point(true).as_bytes());
     nonce.push(1u8);
 
-    let res = ProofSquareFree::generate::<sha2::Sha256>(&sk, nonce.as_slice());
+    let res = SquareFreeProof::generate::<sha2::Sha256>(&sk, nonce.as_slice());
     assert!(res.is_some());
     let proof = res.unwrap();
 
     assert!(proof.verify::<sha2::Sha256>(&pk, nonce.as_slice()));
 
     let mut bytes = proof.to_bytes();
-    let res = ProofSquareFree::from_bytes(bytes.as_slice());
+    let res = SquareFreeProof::from_bytes(bytes.as_slice());
     assert!(res.is_ok());
     let proof1 = res.unwrap();
     assert_eq!(proof1.to_bytes(), proof.to_bytes());
 
     bytes[0] = 128;
-    let res = ProofSquareFree::from_bytes(bytes.as_slice());
+    let res = SquareFreeProof::from_bytes(bytes.as_slice());
     assert!(res.is_err());
 }
 
@@ -210,11 +210,11 @@ fn all() {
 
     let m = b"this is a test message";
     let res = pk.encrypt(m, None);
-    assert!(res.is_some());
+    assert!(res.is_ok());
 
     let (c, _) = res.unwrap();
     let res = sk.decrypt(&c);
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let m1 = res.unwrap();
     assert_eq!(m1, m);
 
@@ -226,6 +226,39 @@ fn all() {
 
     for b in &bad_messages {
         let res = pk.encrypt(&b, None);
-        assert!(res.is_none());
+        assert!(res.is_err());
     }
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+#[test]
+fn range() {
+    use k256::elliptic_curve::Field;
+    use rand::SeedableRng;
+
+    let mut rng = rand_chacha::ChaCha8Rng::from_seed([0u8; 32]);
+
+    let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
+    assert!(res.is_some());
+    let sk = res.unwrap();
+    let pk = EncryptionKey::from(&sk);
+    let signing_key = k256::Scalar::random(&mut rng);
+    let x = BigNumber::from_slice(&signing_key.to_bytes());
+    let r = BigNumber::from_rng(pk.n(), &mut rng);
+    let range = BigNumber::from_slice(
+        &hex::decode("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141").unwrap(),
+    );
+
+    let cipher_x = pk.encrypt_num_with_nonce(&x, &r).unwrap();
+
+    let range_proof = RangeProof::prove(
+        &pk,
+        &range,
+        &cipher_x,
+        &x,
+        &r,
+        RangeProofErrorFactor::Bits40,
+        &mut rng,
+    );
+    assert!(range_proof.verify().is_ok());
 }

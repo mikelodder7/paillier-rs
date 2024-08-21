@@ -1,4 +1,4 @@
-use crate::{mod_in, Ciphertext, EncryptionKey, error::*};
+use crate::{error::*, mod_in, Ciphertext, EncryptionKey};
 use serde::{Deserialize, Serialize};
 use unknown_order::BigNumber;
 use zeroize::Zeroize;
@@ -107,8 +107,7 @@ impl DecryptionKey {
     /// Convert a byte representation to a decryption key
     pub fn from_bytes<B: AsRef<[u8]>>(data: B) -> PaillierResult<Self> {
         let data = data.as_ref();
-        let bytes =
-            postcard::from_bytes::<DecryptionKeyBytes>(data)?;
+        let bytes = postcard::from_bytes::<DecryptionKeyBytes>(data)?;
         let pk = EncryptionKey::from_bytes(bytes.n.as_slice())?;
         Ok(Self {
             pk,

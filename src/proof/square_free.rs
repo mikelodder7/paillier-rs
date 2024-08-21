@@ -1,4 +1,4 @@
-use crate::{mod_in, DecryptionKey, EncryptionKey, error::*};
+use crate::{error::*, mod_in, DecryptionKey, EncryptionKey};
 use digest::{
     generic_array::{typenum::Unsigned, GenericArray},
     Digest,
@@ -20,14 +20,14 @@ use unknown_order::BigNumber;
 /// <https://eprint.iacr.org/2017/552> as part of their DKG.
 /// A paillier key generator can prove the parameters where created honestly.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ProofSquareFree(Vec<BigNumber>);
+pub struct SquareFreeProof(Vec<BigNumber>);
 
 const L: usize = 13;
 
 #[cfg(feature = "wasm")]
-wasm_slice_impl!(ProofSquareFree);
+wasm_slice_impl!(SquareFreeProof);
 
-impl ProofSquareFree {
+impl SquareFreeProof {
     /// Generate a new SF proof.
     /// GG20 paper uses lots of values for the entropy like
     /// the ECDSA Public key, the curve generator and prime,
@@ -41,7 +41,7 @@ impl ProofSquareFree {
             for x in proof.as_mut_slice() {
                 *x = x.modpow(&m, &sk.pk.n);
             }
-            ProofSquareFree(proof)
+            SquareFreeProof(proof)
         })
     }
 

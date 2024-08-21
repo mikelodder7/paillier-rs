@@ -4,7 +4,7 @@ use unknown_order::BigNumber;
 use zeroize::Zeroize;
 
 /// A Paillier encryption key
-#[derive(Clone, Debug, Zeroize)]
+#[derive(Clone, Debug, Default, Zeroize)]
 pub struct EncryptionKey {
     pub(crate) n: BigNumber,  // N = p * q, where p,q are primes
     pub(crate) nn: BigNumber, // N^2
@@ -66,23 +66,31 @@ impl EncryptionKey {
         M: AsRef<[u8]>,
     {
         let xx = BigNumber::from_slice(x);
-        if !mod_in(&xx, &self.n) {
+        let r = r.unwrap_or_else(|| Nonce::random(&self.n));
+
+        let c = self.encrypt_num_with_nonce(&xx, &r)?;
+
+        Ok((c, r))
+    }
+
+    /// Encrypt a number with the encryption key and given nonce
+    #[allow(clippy::many_single_char_names)]
+    pub fn encrypt_num_with_nonce(&self, x: &BigNumber, r: &Nonce) -> PaillierResult<Ciphertext> {
+        if !mod_in(x, &self.n) {
             return Err(PaillierError::InvalidEncryptionInputs);
         }
 
-        let r = r.unwrap_or_else(|| Nonce::random(&self.n));
-
-        if !mod_in(&r, &self.n) {
+        if !mod_in(r, &self.n) {
             return Err(PaillierError::InvalidEncryptionInputs);
         }
 
         // a = (N+1)^m mod N^2
-        let a = (&self.n + BigNumber::one()).modpow(&xx, &self.nn);
+        let a = (&self.n + BigNumber::one()).modpow(x, &self.nn);
         // b = r^N mod N^2
         let b = &r.modpow(&self.n, &self.nn);
 
         let c = a.modmul(b, &self.nn);
-        Ok((c, r))
+        Ok(c)
     }
 
     /// Combines two Paillier ciphertexts

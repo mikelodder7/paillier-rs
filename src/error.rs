@@ -24,6 +24,15 @@ pub enum PaillierError {
     /// Invalid ciphertext
     #[error("Invalid ciphertext, unable to decrypt")]
     InvalidCiphertext,
+    /// Invalid range proof error factor number
+    #[error("Invalid range proof error factor number")]
+    InvalidRangeProofErrorFactor,
+    /// Invalid verifier commitment
+    #[error("Invalid verifier commitment")]
+    InvalidVerifierCommitment,
+    /// Invalid range proof
+    #[error("Invalid range proof")]
+    InvalidRangeProof,
 }
 
 /// Paillier results

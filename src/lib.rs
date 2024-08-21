@@ -21,18 +21,11 @@ mod macros;
 mod decryptionkey;
 mod encryptionkey;
 mod error;
-mod proof_psf;
-
-pub use error::*;
-pub use unknown_order;
+mod proof;
+mod utils;
 
 use unknown_order::BigNumber;
-
-pub(crate) fn mod_in(a: &BigNumber, n: &BigNumber) -> bool {
-    let lhs = &BigNumber::one() <= a;
-    let rhs = a < n;
-    lhs & rhs
-}
+use utils::*;
 
 /// A Paillier Ciphertext
 pub type Ciphertext = BigNumber;
@@ -41,4 +34,6 @@ pub type Nonce = BigNumber;
 
 pub use decryptionkey::*;
 pub use encryptionkey::*;
-pub use proof_psf::*;
+pub use error::*;
+pub use proof::*;
+pub use unknown_order;
