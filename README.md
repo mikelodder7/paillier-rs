@@ -12,7 +12,7 @@ Paillier supports homomorphic encryption and is computationally comparable to RS
 
 This crate uses the [unknown-order](https://crates.io/crates/unknown_order) crate which allows
 switching the underlying big number implementation based on license preferences and performance.
-As such, this crate reexports `unknown_order` so consumers of this crate do not have to have a separate dependency.
+As such, this crate reexports `crypto-bigint` so consumers of this crate do not have to have a separate dependency.
 
 ## Why this crate?
 

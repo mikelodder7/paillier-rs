@@ -15,25 +15,36 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(feature = "wasm")]
 #[macro_use]
 mod macros;
-mod decryptionkey;
-mod encryptionkey;
+mod core;
 mod error;
-mod proof;
 mod utils;
 
-use unknown_order::BigNumber;
-use utils::*;
+#[cfg(feature = "2048")]
+/// Paillier 2048-bit key size
+pub mod paillier2048 {
+    use super::*;
 
-/// A Paillier Ciphertext
-pub type Ciphertext = BigNumber;
-/// A Paillier nonce used during encryption
-pub type Nonce = BigNumber;
+    define_types!(U1024, U2048, U4096);
+}
+#[cfg(feature = "3072")]
+/// Paillier 3072-bit key size
+pub mod paillier3072 {
+    use super::*;
 
-pub use decryptionkey::*;
-pub use encryptionkey::*;
+    define_types!(U1536, U3072, U6144);
+}
+
+#[cfg(feature = "4096")]
+/// Paillier 4096-bit key size
+pub mod paillier4096 {
+    use super::*;
+
+    define_types!(U2048, U4096, U8192);
+}
+
+pub use crypto_bigint;
+pub use crypto_primes;
 pub use error::*;
-pub use proof::*;
-pub use unknown_order;
+pub use utils::var_bytes_to_uint;

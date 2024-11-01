@@ -15,6 +15,9 @@ pub enum PaillierError {
     /// Invalid encryption inputs
     #[error("Invalid encryption inputs")]
     InvalidEncryptionInputs,
+    #[error("Invalid decryption key")]
+    /// Invalid decryption key
+    InvalidDecryptionKey,
     /// Invalid ciphertext add inputs
     #[error("Invalid ciphertext add inputs")]
     InvalidCipherTextAddInputs,
@@ -33,6 +36,9 @@ pub enum PaillierError {
     /// Invalid range proof
     #[error("Invalid range proof")]
     InvalidRangeProof,
+    /// Invalid primes provided for key generation
+    #[error("Invalid primes")]
+    InvalidPrimes,
 }
 
 /// Paillier results

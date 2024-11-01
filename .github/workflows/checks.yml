@@ -1,4 +1,4 @@
-name: Checks
+name: libpaillier
 
 on:
   pull_request:
@@ -15,75 +15,91 @@ on:
 
 env:
   CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  RUST_LOG_STYLE: always
   RUSTFLAGS: "-Dwarnings"
+  RUSTDOCFLAGS: "-Dwarnings"
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  clippy:
-    runs-on:
-      - ubuntu-latest
-      - macOS
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toochain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.60.0
-          components: clippy
-          override: true
-          profile: minimal
-      - run: cargo clippy --all -- -D warnings
+          toolchain: stable
+      - run: cargo build --all-features
 
-#  rustfmt:
-#    runs-on: ubuntu-latest
-#    - uses: actions/checkout@v2
-#    - uses: actions-rs/toochain@v1
-#      with:
-#        toolchain: stable
-#        components: clippy
-#        override: true
-#        profile: minimal
-#    - uses: actions-rs/cargo@v1
-#      with:
-#        command: fmt
-#        args: --all -- --check
-#  build:
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        rust:
-#          - stable
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          profile: minimal
-#          toolchain: ${{ matrix.rust }}
-#          override: true
-#      - run: cargo build --no-default-features --features=rust
-#      - run: cargo build --no-default-features --features=openssl
-#      - run: cargo build --no-default-features --features=gmp
-#  test:
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        include:
-#          - target: i686-unknown-linux-gnu
-#            rust: stable
-#            deps: sudo apt update && sudo apt install gcc-multilib
-#          - target: x86_64-unknown-linux-gnu
-#            rust: stable
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          profile: minimal
-#          toolchain: ${{ matrix.rust }}
-#          target: ${{ matrix.target }}
-#          override: true
-#      - run: ${{ matrix.deps }}
-#      - run: cargo check --target ${{ matrix.target }} --no-default-features --features=rust
-#      - run: cargo check --target ${{ matrix.target }} --no-default-features --features=openssl
-#      - run: cargo check --target ${{ matrix.target }} --no-default-features --features=gmp
-#      - run: cargo test --target ${{ matrix.target }} --no-default-features --features=rust
-#      - run: cargo test --target ${{ matrix.target }} --no-default-features --features=openssl
-#      - run: cargo test --target ${{ matrix.target }} --no-default-features --features=gmp
-#
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - run: cargo test --all-features --release
+
+  careful:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-careful
+      - run: cargo careful test
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
+      - run: cargo clippy --all --all-features -- -D warnings
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+      - run: cargo fmt -- --check
+
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - run: cargo doc --all-features
+
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-udeps
+      - run: cargo udeps --all-targets --all-features
+
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-outdated
+      - run: cargo outdated --root-deps-only --exit-code 1
+  pants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-pants
+      - run: cargo pants --loud

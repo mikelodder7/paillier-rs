@@ -6,33 +6,34 @@ Paillier ciphertexts are homorphic in that the can be added.
 """
 documentation = "https://docs.rs/paillier-rs"
 edition = "2021"
-license = "Apache-2.0"
+license = "Apache-2.0 OR MIT"
 name = "libpaillier"
 readme = "README.md"
 repository = "https://github.com/mikelodder7/paillier-rs"
 version = "0.7.0"
 
 [features]
-default = ["crypto"]
-crypto = ["unknown_order/crypto"]
-gmp = ["unknown_order/gmp"]
-openssl = ["unknown_order/openssl"]
-rust = ["unknown_order/rust"]
+default = ["2048"]
+2048 = []
+3072 = []
+4096 = []
 wasm = ["getrandom", "wasm-bindgen", "serde-wasm-bindgen"]
 
 [dependencies]
 bit-vec = "0.8"
+crypto-bigint = { version = "0.5", features = ["alloc", "generic-array", "rand", "serde", "zeroize"] }
+crypto-primes = "0.5"
 digest = "0.10"
 getrandom = { version = "0.2", features = ["js"], optional = true }
 rand = "0.8"
-postcard = { version = "1.0.9", features = ["use-std"] }
+postcard = { version = "1.0", features = ["use-std"] }
 serde = { version = "1.0", features = ["serde_derive"] }
 serde-wasm-bindgen = { version = "0.6", optional = true }
 sha2 = "0.10"
+subtle = "2.6"
 thiserror = "1.0"
-unknown_order = { version = "0.10", default-features = false  }
 wasm-bindgen = { version = "0.2", default-features = false, features = ["serde-serialize"], optional = true }
-zeroize = { version = "1.8", features = ["zeroize_derive"] }
+zeroize = { version = "1", features = ["zeroize_derive"] }
 
 [dev-dependencies]
 elliptic-curve = "0.13"
@@ -42,4 +43,3 @@ rand_chacha = "0.3.1"
 wasm-bindgen-test = "0.3"
 multibase = "0.9"
 serde_json = "1.0"
-unicase = "2.6"

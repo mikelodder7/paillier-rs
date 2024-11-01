@@ -1,6 +1,6 @@
+use crypto_bigint::{Encoding, RandomMod};
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-use libpaillier::*;
-use unknown_order::BigNumber;
+use libpaillier::{paillier2048::*, var_bytes_to_uint};
 
 /// Taken from https://github.com/mikelodder7/cunningham_chain/blob/master/findings.md
 /// prefix'd with '9' for multibase to work
@@ -12,21 +12,21 @@ const TEST_PRIMES: [&str; 4] = [
 ];
 
 /// prefix with 9 any input
-fn b10(s: &str) -> BigNumber {
+fn b10(s: &str) -> Base {
     let (_, bytes) = multibase::decode(s).unwrap();
-    BigNumber::from_slice(bytes.as_slice())
+    Base::from_be_slice(bytes.as_slice())
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn encrypt() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
     let m = b"this is a test message";
-    let res = pk.encrypt(m, None);
+    let res = pk.encrypt(m);
     assert!(res.is_ok());
 
     let (c, _) = res.unwrap();
@@ -36,13 +36,13 @@ fn encrypt() {
     assert_eq!(m1, m);
 
     // bad messages
-    let nn1: BigNumber = pk.nn() + 1;
-    let nn = pk.nn().to_bytes();
-    let nn1_bytes = nn1.to_bytes();
-    let bad_messages: [&[u8]; 3] = [b"", nn.as_slice(), nn1_bytes.as_slice()];
+    let nn1 = pk.modulus_squared().as_ref().wrapping_add(&Quad::ONE);
+    let nn = pk.modulus_squared().to_be_bytes();
+    let nn1_bytes = nn1.to_be_bytes();
+    let bad_messages: [&[u8]; 3] = [b"", &nn, &nn1_bytes];
 
     for b in &bad_messages {
-        let res = pk.encrypt(&b, None);
+        let res = pk.encrypt(&b);
         assert!(res.is_err());
     }
 }
@@ -51,15 +51,12 @@ fn encrypt() {
 #[test]
 fn add() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
-    let m1 = BigNumber::from(7);
-    let m2 = BigNumber::from(6);
-
-    let res1 = pk.encrypt(&m1.to_bytes(), None);
-    let res2 = pk.encrypt(&m2.to_bytes(), None);
+    let res1 = pk.encrypt(&[7u8]);
+    let res2 = pk.encrypt(&[6u8]);
     assert!(res1.is_ok());
     assert!(res2.is_ok());
 
@@ -71,22 +68,21 @@ fn add() {
     let res = sk.decrypt(&c3);
     assert!(res.is_ok());
     let bytes = res.unwrap();
-    let m3 = BigNumber::from_slice(bytes);
-    assert_eq!(m3, BigNumber::from(13));
+    assert_eq!(bytes.len(), 1);
+    assert_eq!(13, bytes[0]);
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn mul() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
-    let m1 = BigNumber::from(7);
-    let m2 = BigNumber::from(6);
+    let m2 = Dual::from_u8(6);
 
-    let res1 = pk.encrypt(&m1.to_bytes(), None);
+    let res1 = pk.encrypt(&[7u8]);
     assert!(res1.is_ok());
 
     let (c1, _) = res1.unwrap();
@@ -96,67 +92,60 @@ fn mul() {
     let res = sk.decrypt(&c2);
     assert!(res.is_ok());
     let bytes = res.unwrap();
-    let m3 = BigNumber::from_slice(bytes.as_slice());
-    assert_eq!(m3, BigNumber::from(42));
+    assert_eq!(bytes.len(), 1);
+    assert_eq!(42, bytes[0]);
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn serialization() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
     let res = serde_json::to_string(&pk);
-    assert!(res.is_ok());
-    let pk_str = unicase::Ascii::new(res.unwrap());
-    assert_eq!(
-        pk_str,
-        unicase::Ascii::new(
-            r#""1a916b30385e4d342bbcb6e3c56d70c37cb55c6ef50842006081e7e39df0670cf0de00707611839bb84355b43ddc871476fbf251651e391d2811eadb148b7f4aaf79bb770a5262290ba9d8be41b69b03ca5056b702eb02d29ec896eb1274661181b56e4b27979a8a47238c925f91653766fb286d833db1fdb93816d826d60a653bd0d2afa196c95265635108bd32ef63c52310b93bb682498d17d16e257f19503fe9d718418ad7a1834c64f125944818674aaf2c2c0bbb12d13d45bcc70d8db697879fba820fbedde986807ad0f15622d1d9ff7ede7e29b7547c3db9a2b3ca6d3e086a1d258b0b3f8b6e5008e3d8a85e744299240fd2064811aeb5e1db2b299f""#
-        )
-    );
+    if res.is_err() {
+        assert!(false, "{:?}", res.unwrap_err());
+    }
+    let pk_str = res.unwrap();
     let res = serde_json::from_str::<EncryptionKey>(&pk_str);
     assert!(res.is_ok());
     let pk1 = res.unwrap();
-    assert_eq!(pk1.n(), pk.n());
+    assert_eq!(pk1.modulus(), pk.modulus());
 
     let res = serde_json::to_string(&sk);
     assert!(res.is_ok());
     let sk_str = res.unwrap();
-
     let res = serde_json::from_str::<DecryptionKey>(&sk_str);
     assert!(res.is_ok());
     let sk1 = res.unwrap();
     assert_eq!(sk.u(), sk1.u());
     assert_eq!(sk.totient(), sk1.totient());
     assert_eq!(sk.lambda(), sk1.lambda());
-    assert_eq!(sk.n(), sk1.n());
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn bytes() {
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
     let bytes = pk.to_bytes();
     assert_eq!(bytes.len(), 256);
     let pk1 = EncryptionKey::from_bytes(bytes.as_slice()).unwrap();
-    assert_eq!(pk1.n(), pk.n());
+    assert_eq!(pk1.modulus(), pk.modulus());
 
     let bytes = sk.to_bytes();
-    assert_eq!(bytes.len(), 1032);
+    assert_eq!(bytes.len(), 256);
     let res = DecryptionKey::from_bytes(bytes.as_slice());
     assert!(res.is_ok());
     let sk1 = res.unwrap();
     assert_eq!(sk.u(), sk1.u());
     assert_eq!(sk.totient(), sk1.totient());
     assert_eq!(sk.lambda(), sk1.lambda());
-    assert_eq!(sk.n(), sk1.n());
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
@@ -165,7 +154,7 @@ fn proof() {
     use k256::elliptic_curve::group::prime::PrimeCurveAffine;
 
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[2]), &b10(TEST_PRIMES[3]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
@@ -183,9 +172,7 @@ fn proof() {
     nonce.extend_from_slice(spk.as_affine().to_encoded_point(true).as_bytes());
     nonce.push(1u8);
 
-    let res = SquareFreeProof::generate::<sha2::Sha256>(&sk, nonce.as_slice());
-    assert!(res.is_some());
-    let proof = res.unwrap();
+    let proof = SquareFreeProof::generate::<sha2::Sha256>(&sk, nonce.as_slice());
 
     assert!(proof.verify::<sha2::Sha256>(&pk, nonce.as_slice()));
 
@@ -204,12 +191,12 @@ fn proof() {
 #[test]
 fn all() {
     let res = DecryptionKey::random();
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
 
     let m = b"this is a test message";
-    let res = pk.encrypt(m, None);
+    let res = pk.encrypt(m);
     assert!(res.is_ok());
 
     let (c, _) = res.unwrap();
@@ -219,13 +206,13 @@ fn all() {
     assert_eq!(m1, m);
 
     // bad messages
-    let nn1: BigNumber = pk.nn() + 1;
-    let nn = pk.nn().to_bytes();
-    let nn1_bytes = nn1.to_bytes();
-    let bad_messages: [&[u8]; 3] = [b"", nn.as_slice(), nn1_bytes.as_slice()];
+    let nn1 = pk.modulus_squared().as_ref().wrapping_add(&Quad::ONE);
+    let nn = pk.modulus_squared().to_be_bytes();
+    let nn1_bytes = nn1.to_be_bytes();
+    let bad_messages: [&[u8]; 3] = [b"", &nn, &nn1_bytes];
 
     for b in &bad_messages {
-        let res = pk.encrypt(&b, None);
+        let res = pk.encrypt(&b);
         assert!(res.is_err());
     }
 }
@@ -239,17 +226,18 @@ fn range() {
     let mut rng = rand_chacha::ChaCha8Rng::from_seed([0u8; 32]);
 
     let res = DecryptionKey::with_primes_unchecked(&b10(TEST_PRIMES[0]), &b10(TEST_PRIMES[1]));
-    assert!(res.is_some());
+    assert!(res.is_ok());
     let sk = res.unwrap();
     let pk = EncryptionKey::from(&sk);
     let signing_key = k256::Scalar::random(&mut rng);
-    let x = BigNumber::from_slice(&signing_key.to_bytes());
-    let r = BigNumber::from_rng(pk.n(), &mut rng);
-    let range = BigNumber::from_slice(
+    let x = var_bytes_to_uint(&signing_key.to_bytes()).unwrap();
+    let r = Dual::random_mod(&mut rng, pk.modulus());
+    let range = var_bytes_to_uint(
         &hex::decode("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141").unwrap(),
-    );
+    )
+    .unwrap();
 
-    let cipher_x = pk.encrypt_num_with_nonce(&x, &r).unwrap();
+    let cipher_x = pk.encrypt_with_nonce(&x, &r).unwrap();
 
     let range_proof = RangeProof::prove(
         &pk,
@@ -261,4 +249,7 @@ fn range() {
         &mut rng,
     );
     assert!(range_proof.verify().is_ok());
+    assert!(range_proof
+        .verify_with_params(&pk, &cipher_x, &range)
+        .is_ok());
 }
